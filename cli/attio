@@ -1,0 +1,106 @@
+#!/usr/bin/env python3
+"""
+attio: thin multi-workspace wrapper around attio-pp-cli (Printing Press generated).
+
+Usage:
+    attio --ws 5050growth self
+    attio --ws maat records list ...
+    attio --ws meteoric search "acme"
+    attio ws list
+
+Reads ATTIO_API_KEY_<WORKSPACE> from project .env, sets ATTIO_OAUTH2 for the
+subprocess, then execs attio-pp-cli with the remaining args.
+"""
+
+import os
+import sys
+import subprocess
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+ENV_FILE = PROJECT_ROOT / ".env"
+_DEFAULT_BIN = Path.home() / ".local" / "bin" / "attio-pp-cli"
+BINARY = os.environ.get("ATTIO_PP_CLI_PATH", str(_DEFAULT_BIN))
+
+
+def load_dotenv(path: Path) -> dict[str, str]:
+    if not path.exists():
+        return {}
+    out = {}
+    for raw in path.read_text().splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        k, _, v = line.partition("=")
+        out[k.strip()] = v.strip().strip('"').strip("'")
+    return out
+
+
+def list_workspaces(env: dict[str, str]) -> list[str]:
+    return sorted(
+        k.removeprefix("ATTIO_API_KEY_").lower()
+        for k in env
+        if k.startswith("ATTIO_API_KEY_")
+    )
+
+
+def usage(env: dict[str, str], code: int = 0) -> None:
+    print("attio: multi-workspace wrapper for attio-pp-cli\n")
+    print("Usage:")
+    print("  attio --ws <name> <attio-pp-cli-args...>")
+    print("  attio ws list")
+    print("\nKnown workspaces from .env:")
+    for ws in list_workspaces(env):
+        print(f"  - {ws}")
+    print("\nExamples:")
+    print("  attio --ws 5050growth self --agent")
+    print("  attio --ws maat records list --compact")
+    print("  attio --ws horizons sync workflow archive")
+    sys.exit(code)
+
+
+def main(argv: list[str]) -> int:
+    env = load_dotenv(ENV_FILE)
+
+    if len(argv) == 0 or argv[0] in ("-h", "--help"):
+        usage(env)
+
+    if argv[0] == "ws" and len(argv) >= 2 and argv[1] == "list":
+        for ws in list_workspaces(env):
+            print(ws)
+        return 0
+
+    if argv[0] != "--ws" or len(argv) < 2:
+        print("error: first arg must be --ws <workspace> (or 'ws list')", file=sys.stderr)
+        usage(env, code=2)
+
+    workspace = argv[1].upper()
+    passthrough = argv[2:]
+
+    key_var = f"ATTIO_API_KEY_{workspace}"
+    token = env.get(key_var) or os.environ.get(key_var)
+    if not token:
+        print(f"error: {key_var} not found in .env or environment", file=sys.stderr)
+        print(f"available: {', '.join(list_workspaces(env))}", file=sys.stderr)
+        return 2
+
+    if not Path(BINARY).exists():
+        print(f"error: attio-pp-cli not found at {BINARY}", file=sys.stderr)
+        print("set ATTIO_PP_CLI_PATH or move the binary into place", file=sys.stderr)
+        return 2
+
+    real_home = Path(os.environ.get("HOME", str(Path.home())))
+    sandbox_home = real_home / ".attio-cli-ws" / workspace.lower()
+    sandbox_home.mkdir(parents=True, exist_ok=True)
+
+    child_env = os.environ.copy()
+    child_env["ATTIO_OAUTH2"] = token
+    child_env["HOME"] = str(sandbox_home)
+    child_env.pop("ATTIO_CLIENT_ID", None)
+    child_env.pop("ATTIO_CLIENT_SECRET", None)
+
+    return subprocess.call([BINARY, *passthrough], env=child_env)
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
