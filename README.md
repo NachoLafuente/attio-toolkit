@@ -6,8 +6,11 @@ Built and maintained by [5050Growth](https://5050growth.com), an [Attio Expert](
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│  /attio-audit       Score any workspace 0-100. Markdown out.     │
-│  cli/attio          Multi-workspace wrapper for attio-pp-cli.    │
+│  /attio-audit                Score any workspace 0-100.          │
+│  /attio-cost-explorer        Estimate your bill across plans.    │
+│  /attio-stale-records        Find records safe to archive.       │
+│  /attio-attribute-coverage   Find schema bloat (dead fields).    │
+│  cli/attio                   Multi-workspace wrapper.            │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -86,6 +89,95 @@ Output looks like this:
 ```
 
 Full skill docs: [skills/attio-audit/SKILL.md](skills/attio-audit/SKILL.md).
+
+### `/attio-cost-explorer`: Estimate your Attio bill across plan tiers
+
+Tells you the cheapest plan that fits your current footprint, what you'd pay across all tiers, and where you might save. Useful before signing a contract, deciding to upgrade, or sanity-checking a bill.
+
+```bash
+ATTIO_API_KEY=<your-token> python skills/attio-cost-explorer/cost.py
+```
+
+```
+# Attio Cost Explorer: ACME Corp
+
+## Today's footprint
+- 4 workspace members
+- 6 objects (1 custom)
+- 8 lists
+- ~1,400 records sampled across People, Companies, and Deals
+
+## Cheapest plan that fits
+Pro at ~$69/seat/mo (annual billing). Custom objects detected (1), which require Pro.
+Estimated cost: $276/mo ($3,312/year).
+
+## Where you might save
+- You have only 1 custom object. If you can fold its use case into people/companies/deals,
+  you'd drop to Plus and save $140/mo.
+```
+
+Full skill docs: [skills/attio-cost-explorer/SKILL.md](skills/attio-cost-explorer/SKILL.md).
+
+### `/attio-stale-records`: Find records that are safe to archive
+
+Surfaces records nobody has touched in a while, broken down by object and age. Identifies "quick wins": records that are both ancient AND sparse (no email, no domain, no key fields), so you can clean up safely without thinking.
+
+```bash
+ATTIO_API_KEY=<your-token> python skills/attio-stale-records/stale.py --days 90
+```
+
+```
+# Attio Stale Records: ACME Corp
+
+## Summary: 312 of 1,800 sampled records are stale (17%)
+
+| Object | Sampled | Stale | % Stale |
+|--------|---------|-------|---------|
+| people | 800 | 145 | 18% |
+| companies | 600 | 134 | 22% |
+| deals | 400 | 33 | 8% |
+
+## Quick wins: sparse + ancient (likely safe to archive)
+- companies: Acme Subsidiary 7 (a1b2): 520d idle, no key fields filled
+- people: (no name) (cd34): 460d idle, no email, no company
+- (and 14 more)
+```
+
+Full skill docs: [skills/attio-stale-records/SKILL.md](skills/attio-stale-records/SKILL.md).
+
+### `/attio-attribute-coverage`: Find schema bloat (dead fields)
+
+For each object, shows the % of records that actually have each attribute filled. Flags attributes used on <10% of records as probable bloat. The natural follow-up to `/attio-audit` saying "your schema is heavy": this tells you exactly which fields to delete first.
+
+```bash
+ATTIO_API_KEY=<your-token> python skills/attio-attribute-coverage/coverage.py --object companies
+```
+
+```
+# Attio Attribute Coverage: ACME Corp
+
+## Companies (500 records sampled, 38 attributes)
+
+### ✓ Well-used (>=50%): 11 attributes
+- Name `name`: 96% filled (480/500)
+- Domain `domains`: 84% filled (420/500)
+- ...
+
+### ⚠ Underused (10-49%): 14 attributes
+- LinkedIn `linkedin_url`: 38% filled (190/500)
+- ARR estimate `arr_estimate`: 12% filled (60/500)
+
+### 💀 Probably bloat (<10%): 13 attributes
+- Cap table url `cap_table`: 3% filled (15/500)
+- Preferred vendor `preferred_vendor`: 1% filled (4/500)
+- (and 11 more)
+
+### Suggested cleanup
+Consider archiving these custom attributes if no team workflow depends on them:
+`cap_table`, `preferred_vendor`, ...
+```
+
+Full skill docs: [skills/attio-attribute-coverage/SKILL.md](skills/attio-attribute-coverage/SKILL.md).
 
 ### `cli/attio`: Multi-workspace CLI wrapper
 

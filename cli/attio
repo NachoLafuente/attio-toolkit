@@ -3,30 +3,56 @@
 attio: thin multi-workspace wrapper around attio-pp-cli (Printing Press generated).
 
 Usage:
-    attio --ws 5050growth self
-    attio --ws maat records list ...
-    attio --ws meteoric search "acme"
     attio ws list
+    attio --ws <workspace> <attio-pp-cli-args...>
 
-Reads ATTIO_API_KEY_<WORKSPACE> from project .env, sets ATTIO_OAUTH2 for the
-subprocess, then execs attio-pp-cli with the remaining args.
+Examples:
+    attio --ws company1 self --agent
+    attio --ws company2 records list --compact
+    attio --ws company3 sync workflow archive
+
+Resolution order for the .env file (the wrapper reads ATTIO_API_KEY_<WORKSPACE> from it):
+    1. $ATTIO_TOOLKIT_ENV (explicit path override)
+    2. ./.env in the current working directory
+    3. .env in any parent directory of the current working directory
+    4. .env next to this script
+
+The wrapper sets ATTIO_OAUTH2 for the subprocess, then execs attio-pp-cli
+with the remaining args. Each workspace gets its own isolated state directory
+under ~/.attio-cli-ws/<workspace>/ via a per-call HOME override.
 """
 
 import os
-import sys
 import subprocess
+import sys
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-ENV_FILE = PROJECT_ROOT / ".env"
 _DEFAULT_BIN = Path.home() / ".local" / "bin" / "attio-pp-cli"
 BINARY = os.environ.get("ATTIO_PP_CLI_PATH", str(_DEFAULT_BIN))
 
 
+def find_env_file() -> Path | None:
+    explicit = os.environ.get("ATTIO_TOOLKIT_ENV")
+    if explicit:
+        candidate = Path(explicit).expanduser()
+        if candidate.exists():
+            return candidate
+
+    cwd = Path.cwd()
+    for d in (cwd, *cwd.parents):
+        candidate = d / ".env"
+        if candidate.exists():
+            return candidate
+
+    script_env = Path(__file__).resolve().parent / ".env"
+    if script_env.exists():
+        return script_env
+
+    return None
+
+
 def load_dotenv(path: Path) -> dict[str, str]:
-    if not path.exists():
-        return {}
-    out = {}
+    out: dict[str, str] = {}
     for raw in path.read_text().splitlines():
         line = raw.strip()
         if not line or line.startswith("#") or "=" not in line:
@@ -34,6 +60,17 @@ def load_dotenv(path: Path) -> dict[str, str]:
         k, _, v = line.partition("=")
         out[k.strip()] = v.strip().strip('"').strip("'")
     return out
+
+
+def collect_env() -> dict[str, str]:
+    env: dict[str, str] = {}
+    f = find_env_file()
+    if f:
+        env.update(load_dotenv(f))
+    for k, v in os.environ.items():
+        if k.startswith("ATTIO_API_KEY_"):
+            env.setdefault(k, v)
+    return env
 
 
 def list_workspaces(env: dict[str, str]) -> list[str]:
@@ -45,22 +82,30 @@ def list_workspaces(env: dict[str, str]) -> list[str]:
 
 
 def usage(env: dict[str, str], code: int = 0) -> None:
-    print("attio: multi-workspace wrapper for attio-pp-cli\n")
+    print("attio: multi-workspace wrapper for attio-pp-cli")
+    print()
     print("Usage:")
     print("  attio --ws <name> <attio-pp-cli-args...>")
     print("  attio ws list")
-    print("\nKnown workspaces from .env:")
-    for ws in list_workspaces(env):
-        print(f"  - {ws}")
-    print("\nExamples:")
-    print("  attio --ws 5050growth self --agent")
-    print("  attio --ws maat records list --compact")
-    print("  attio --ws horizons sync workflow archive")
+    print()
+    workspaces = list_workspaces(env)
+    if workspaces:
+        print("Known workspaces from .env:")
+        for ws in workspaces:
+            print(f"  - {ws}")
+    else:
+        print("No workspaces found. Add lines like ATTIO_API_KEY_ACME=<token> to a .env file")
+        print("in your current directory (or set ATTIO_TOOLKIT_ENV to the path of your .env).")
+    print()
+    print("Examples:")
+    print("  attio --ws acme self --agent")
+    print("  attio --ws acme records list --compact")
+    print("  attio --ws acme sync workflow archive")
     sys.exit(code)
 
 
 def main(argv: list[str]) -> int:
-    env = load_dotenv(ENV_FILE)
+    env = collect_env()
 
     if len(argv) == 0 or argv[0] in ("-h", "--help"):
         usage(env)
@@ -78,15 +123,19 @@ def main(argv: list[str]) -> int:
     passthrough = argv[2:]
 
     key_var = f"ATTIO_API_KEY_{workspace}"
-    token = env.get(key_var) or os.environ.get(key_var)
+    token = env.get(key_var)
     if not token:
         print(f"error: {key_var} not found in .env or environment", file=sys.stderr)
-        print(f"available: {', '.join(list_workspaces(env))}", file=sys.stderr)
+        available = list_workspaces(env)
+        if available:
+            print(f"available: {', '.join(available)}", file=sys.stderr)
+        else:
+            print("no workspaces configured. See `attio --help` for setup.", file=sys.stderr)
         return 2
 
     if not Path(BINARY).exists():
         print(f"error: attio-pp-cli not found at {BINARY}", file=sys.stderr)
-        print("set ATTIO_PP_CLI_PATH or move the binary into place", file=sys.stderr)
+        print("set ATTIO_PP_CLI_PATH or follow the install steps in the toolkit README.", file=sys.stderr)
         return 2
 
     real_home = Path(os.environ.get("HOME", str(Path.home())))
