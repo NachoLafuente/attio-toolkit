@@ -1,13 +1,13 @@
 ---
 name: attio-stale-records
-description: Find Attio records that haven't been touched in a while and surface obvious archive candidates. Use when the user asks to "find dead records", "clean up my Attio", "find stale leads/companies/deals", "what's safe to archive", "audit dormant records", or pastes a token and asks about CRM hygiene. Read-only, sample-based. Output is a markdown report (or JSON with --json).
+description: Find Attio records that haven't been touched in a while and surface obvious archive candidates. Use when the user asks to "find dead records", "clean up my Attio", "find stale leads/companies/deals", "what to clean up", "audit dormant records", or pastes a token and asks about CRM hygiene. Read-only, sample-based. Output is a markdown report (or JSON with --json).
 license: MIT
 author: 5050Growth
 ---
 
 # attio-stale-records
 
-Surfaces records that haven't been updated in a configurable number of days, broken down by object and age bucket, with a list of "quick wins" that are clearly safe to archive.
+Surfaces records that haven't been updated in a configurable number of days, broken down by object and age bucket, with a list of "quick wins" that are clear archive candidates.
 
 ## When to use this skill
 

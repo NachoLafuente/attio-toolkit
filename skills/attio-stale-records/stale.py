@@ -163,7 +163,7 @@ def render(workspace: dict, by_object: dict, threshold_days: int) -> str:
             quick_wins.append((obj_slug, display_label(obj_slug, r), days))
     if quick_wins:
         quick_wins.sort(key=lambda t: -t[2])
-        out.append("## Quick wins: sparse + ancient (likely safe to archive)")
+        out.append("## Quick wins: sparse + ancient (low-risk cleanup candidates)")
         out.append("")
         for obj_slug, label, days in quick_wins[:15]:
             out.append(f"- **{obj_slug}**: {label}: {days}d idle, no key fields filled")

@@ -1,6 +1,6 @@
 ---
 name: attio-attribute-coverage
-description: Show which Attio attributes are actually filled vs unused per object. Flags probable bloat (<10% filled) so you know what's safe to archive. Use when the user asks "which attributes are used in my Attio", "what fields are dead", "schema cleanup", "what to remove from my CRM", "are we using these custom fields", or pastes a token and asks about schema hygiene. Read-only. Output is a markdown report (or JSON with --json).
+description: Show which Attio attributes are actually filled vs unused per object. Flags probable bloat (<10% filled) so you know what to clean up. Use when the user asks "which attributes are used in my Attio", "what fields are dead", "schema cleanup", "what to remove from my CRM", "are we using these custom fields", or pastes a token and asks about schema hygiene. Read-only. Output is a markdown report (or JSON with --json).
 license: MIT
 author: 5050Growth
 ---
