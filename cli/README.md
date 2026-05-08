@@ -43,22 +43,22 @@ chmod +x ./attio
 Add one line per workspace to your project `.env`:
 
 ```ini
-ATTIO_API_KEY_5050GROWTH=<token>
-ATTIO_API_KEY_MAAT=<token>
-ATTIO_API_KEY_HORIZONS=<token>
+ATTIO_API_KEY_COMPANY1=<token>
+ATTIO_API_KEY_COMPANY2=<token>
+ATTIO_API_KEY_COMPANY3=<token>
 ```
 
-The wrapper resolves `--ws maat` to `ATTIO_API_KEY_MAAT`.
+The wrapper resolves `--ws company1` to `ATTIO_API_KEY_COMPANY1`.
 
 ## Usage
 
 ```bash
-./attio ws list                           # list known workspaces from .env
-./attio --ws maat self --agent            # auth check + workspace metadata
-./attio --ws horizons lists list          # list all lists
-./attio --ws 5050growth sync              # sync workspace to local SQLite
-./attio --ws maat search "acme"           # FTS5 search over synced data
-./attio --ws horizons --help              # full attio-pp-cli help
+./attio ws list                              # list known workspaces from .env
+./attio --ws company1 self --agent           # auth check + workspace metadata
+./attio --ws company2 lists list             # list all lists
+./attio --ws company3 sync                   # sync workspace to local SQLite
+./attio --ws company1 search "acme"          # FTS5 search over synced data
+./attio --ws company2 --help                 # full attio-pp-cli help
 ```
 
 Anything after `--ws <name>` is passed straight through to `attio-pp-cli`.
@@ -68,7 +68,7 @@ Anything after `--ws <name>` is passed straight through to `attio-pp-cli`.
 The underlying binary has a `--agent` flag that sets every agent-friendly default in one shot (`--json --compact --no-input --no-color --yes`). Use it when piping output to scripts or LLMs:
 
 ```bash
-./attio --ws maat lists list --agent | jq '.results.data[].name'
+./attio --ws company1 lists list --agent | jq '.results.data[].name'
 ```
 
 ## Per-workspace state
@@ -76,8 +76,8 @@ The underlying binary has a `--agent` flag that sets every agent-friendly defaul
 Each workspace has its own local data directory:
 
 ```
-~/.attio-cli-ws/maat/.local/share/attio-pp-cli/data.db       # MAAT cache + sync state
-~/.attio-cli-ws/horizons/.local/share/attio-pp-cli/data.db   # Horizons cache + sync state
+~/.attio-cli-ws/company1/.local/share/attio-pp-cli/data.db   # Company 1 cache + sync state
+~/.attio-cli-ws/company2/.local/share/attio-pp-cli/data.db   # Company 2 cache + sync state
 ```
 
 Mechanism: the wrapper sets `HOME=~/.attio-cli-ws/<workspace>` for the subprocess only. Side-effect: profiles, feedback logs, and config files are also per-workspace. That's intentional.

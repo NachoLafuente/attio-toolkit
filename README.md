@@ -2,7 +2,7 @@
 
 **Open-source tools for people who actually run Attio in production.**
 
-Built and maintained by [5050Growth](https://5050growth.com), an [Attio Partner](https://attio.com/partners) consultancy.
+Built and maintained by [5050Growth](https://5050growth.com), an [Attio Expert](https://attio.com/experts/5050growth) consultancy.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -92,11 +92,11 @@ Full skill docs: [skills/attio-audit/SKILL.md](skills/attio-audit/SKILL.md).
 A 75-line Python wrapper around [Printing Press](https://printingpress.dev)'s generated `attio-pp-cli` Go binary. The Go CLI is great (150+ subcommands, FTS5-powered local SQLite mirror, agent-friendly flags). The wrapper adds the one thing the upstream binary doesn't have natively: **first-class multi-workspace support**.
 
 ```bash
-./cli/attio ws list                           # list workspaces from .env
-./cli/attio --ws maat self --agent            # auth check
-./cli/attio --ws horizons lists list          # list all lists
-./cli/attio --ws 5050growth sync              # sync to local SQLite
-./cli/attio --ws maat search "acme"           # FTS5 search over synced data
+./cli/attio ws list                              # list workspaces from .env
+./cli/attio --ws company1 self --agent           # auth check
+./cli/attio --ws company2 lists list             # list all lists
+./cli/attio --ws company3 sync                   # sync to local SQLite
+./cli/attio --ws company1 search "acme"          # FTS5 search over synced data
 ```
 
 Each workspace gets isolated local state (cache, sync, profile) under `~/.attio-cli-ws/<workspace>/`. No cross-contamination between client workspaces.
@@ -161,11 +161,19 @@ If you have a specific need, open an issue or [drop me a note](https://www.linke
 
 ## Who's behind this
 
-Hi, I'm [Nacho](https://www.linkedin.com/in/nacholafuente/). I run [5050Growth](https://5050growth.com), a small Attio Partner consultancy. We help founders, VCs, and SaaS teams migrate to Attio cleanly, build the integrations the workspace needs to actually run, and turn the CRM into something the team trusts. Past work includes VC funds, gym SaaS, UHNW networks, and energy suppliers.
+Hi, I'm [Nacho](https://www.linkedin.com/in/nacholafuente/). I run [5050Growth](https://5050growth.com), a small [Attio Expert](https://attio.com/experts/5050growth) consultancy. We help founders, VCs, and SaaS teams migrate to Attio cleanly, build the integrations the workspace needs to actually run, and turn the CRM into something the team trusts. Past work includes VC funds, gym SaaS, UHNW networks, and energy suppliers.
 
 This repo is the productized version of work we do on real client engagements. The audit is the same diagnostic we run on day zero of a new migration. The CLI is what we use across our own client work to keep multi-tenant Attio operations sane.
 
-If you're sizing up a CRM rebuild, an Attio migration, or just want a second pair of eyes on your workspace before you commit to a direction, [let's chat](https://5050growth.com/book/) or drop a line at [nacho@5050growth.com](mailto:nacho@5050growth.com).
+### Need help with your GTM Attio setup?
+
+Book time with me directly: [calendar.notion.so/meet/nacholafuentemoreno/gtm-expert](https://calendar.notion.so/meet/nacholafuentemoreno/gtm-expert)
+
+Or drop a line at [nacho@5050growth.com](mailto:nacho@5050growth.com).
+
+### Liked the toolkit?
+
+If it saved you time, [leave a review on the Attio Experts directory](https://attio.com/experts/5050growth/review). Two minutes of your day, real fuel for ours.
 
 ---
 
