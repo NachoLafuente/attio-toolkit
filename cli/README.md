@@ -48,7 +48,7 @@ ATTIO_API_KEY_COMPANY2=<token>
 ATTIO_API_KEY_COMPANY3=<token>
 ```
 
-The wrapper resolves `--ws company1` to `ATTIO_API_KEY_COMPANY1`.
+`COMPANY1/2/3` are placeholders. Use whatever name fits your workspace (e.g. `ATTIO_API_KEY_ACME`, `ATTIO_API_KEY_INTERNAL`, `ATTIO_API_KEY_CLIENTNAME`). The wrapper just lowercases `--ws <name>` and looks for `ATTIO_API_KEY_<NAME>`.
 
 ## Usage
 
