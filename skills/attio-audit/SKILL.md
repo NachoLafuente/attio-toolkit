@@ -1,6 +1,6 @@
 ---
 name: attio-audit
-description: Score an Attio workspace 0-100 on data quality, schema hygiene, list health, and activity. Use when the user asks to "audit my Attio workspace", "check my CRM hygiene", "is my Attio set up well", "grade my Attio", or pastes an Attio API key and asks how clean their data is. Read-only, ~10 API calls. Output is a markdown report (or JSON with --json).
+description: Score an Attio workspace 0-100 on data quality, schema hygiene, list health, and activity. Use when the user asks to "audit my Attio workspace", "check my CRM hygiene", "is my Attio set up well", "grade my Attio", or pastes an Attio API key and asks how clean their data is. Read-only, ~10 API calls by default (500-record sample). Output is a markdown report (or JSON with --json). Full-scan mode available.
 license: MIT
 author: 5050Growth
 ---
@@ -27,16 +27,33 @@ The skill needs an Attio API token. Resolution order:
 
 If none are set, prompt the user for the token before running.
 
+## Before running: ask which scope
+
+Before invoking the script, ask the user:
+
+> "500-record sample is enough for a representative grade and runs in ~10 seconds. Want me to do all records instead (slower, exact counts)?"
+
+Default to the sample unless they ask for the full scan. The full scan paginates every record in People + Companies — hundreds to thousands of API calls on large workspaces, can take minutes. The grade barely moves between sample and full; full mode mostly matters if the user wants exact absolute numbers for a case study or report.
+
 ## How to run
+
+Sample mode (default, ~10 calls):
 
 ```bash
 ATTIO_API_KEY=<token> python skills/attio-audit/audit.py
 ```
 
-For JSON output (machine-readable):
+Full scan (paginates every record):
+
+```bash
+ATTIO_API_KEY=<token> python skills/attio-audit/audit.py --full
+```
+
+JSON output (machine-readable, works with either mode):
 
 ```bash
 ATTIO_API_KEY=<token> python skills/attio-audit/audit.py --json
+ATTIO_API_KEY=<token> python skills/attio-audit/audit.py --full --json
 ```
 
 ## What gets checked
@@ -60,7 +77,7 @@ The default markdown output has:
 
 ## Limitations
 
-- Sample-based for record checks (200 records per object). Score is a representative estimate, not an exhaustive scan.
+- Default mode samples 500 records per object. Score is a representative estimate, not an exhaustive scan. Use `--full` for exact numbers.
 - Owner detection only sees attributes on the record itself. Workspaces that model ownership through list entries will look like they have no owners, which the report flags explicitly.
 - Does not check workflow/automation health (Attio API does not expose automation run history).
 - Does not detect duplicate records (separate problem, separate tool).

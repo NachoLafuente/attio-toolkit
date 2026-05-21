@@ -6,10 +6,12 @@ Usage:
     ATTIO_API_KEY=<token> python audit.py
     python audit.py --token <token>
     python audit.py --json
+    python audit.py --full   # paginate every record (exact, slower)
 
 Output: markdown report to stdout. Exit code 0 always (this is a report, not a gate).
 
-This script makes ~10 read-only API calls. Safe to run on production workspaces.
+Default mode samples 500 records per object (~10 read-only API calls).
+--full paginates every record (hundreds to thousands of calls). Both modes are read-only.
 """
 
 from __future__ import annotations
@@ -25,8 +27,11 @@ from typing import Any
 import requests
 
 API_BASE = "https://api.attio.com/v2"
-SAMPLE_LIMIT = 200
+SAMPLE_LIMIT = 500
+ATTIO_PAGE_MAX = 500
 HTTP_TIMEOUT = 30
+
+_records_cache: dict[tuple[str, bool], list[dict]] = {}
 
 
 @dataclass
@@ -94,16 +99,40 @@ def fetch_workspace_members(token: str) -> list[dict]:
     return call(token, "GET", "/workspace_members").get("data", [])
 
 
-def fetch_records(token: str, object_slug: str, limit: int = SAMPLE_LIMIT) -> list[dict]:
-    body = {"limit": limit, "offset": 0}
-    return call(token, "POST", f"/objects/{object_slug}/records/query", body).get("data", [])
+def fetch_records(
+    token: str, object_slug: str, full: bool = False, limit: int = SAMPLE_LIMIT
+) -> list[dict]:
+    key = (object_slug, full)
+    if key in _records_cache:
+        return _records_cache[key]
+
+    if not full:
+        body = {"limit": limit, "offset": 0}
+        data = call(token, "POST", f"/objects/{object_slug}/records/query", body).get("data", [])
+        _records_cache[key] = data
+        return data
+
+    all_records: list[dict] = []
+    offset = 0
+    while True:
+        body = {"limit": ATTIO_PAGE_MAX, "offset": offset}
+        page = call(token, "POST", f"/objects/{object_slug}/records/query", body).get("data", [])
+        if not page:
+            break
+        all_records.extend(page)
+        if len(page) < ATTIO_PAGE_MAX:
+            break
+        offset += ATTIO_PAGE_MAX
+    _records_cache[key] = all_records
+    return all_records
 
 
-def score_data_quality(token: str) -> Section:
+def score_data_quality(token: str, full: bool = False) -> Section:
     section = Section(name="Data quality", score=0, max_score=30)
+    scope = "" if full else " sample"
 
     try:
-        people = fetch_records(token, "people")
+        people = fetch_records(token, "people", full=full)
     except requests.HTTPError:
         people = []
     if people:
@@ -112,13 +141,13 @@ def score_data_quality(token: str) -> Section:
         pts = percent_score(pct, [(85, 10), (70, 7), (50, 4)])
         section.score += pts
         section.findings.append(
-            f"{pct:.0f}% of People have an email ({with_email}/{len(people)} sample): {pts}/10"
+            f"{pct:.0f}% of People have an email ({with_email}/{len(people)}{scope}): {pts}/10"
         )
     else:
         section.findings.append("No People records found or accessible: 0/10")
 
     try:
-        companies = fetch_records(token, "companies")
+        companies = fetch_records(token, "companies", full=full)
     except requests.HTTPError:
         companies = []
     if companies:
@@ -127,7 +156,7 @@ def score_data_quality(token: str) -> Section:
         pts = percent_score(pct, [(80, 10), (60, 7), (40, 4)])
         section.score += pts
         section.findings.append(
-            f"{pct:.0f}% of Companies have a domain ({with_domain}/{len(companies)} sample): {pts}/10"
+            f"{pct:.0f}% of Companies have a domain ({with_domain}/{len(companies)}{scope}): {pts}/10"
         )
     else:
         section.findings.append("No Companies records found or accessible: 0/10")
@@ -148,10 +177,10 @@ def score_data_quality(token: str) -> Section:
         section.score += pts
         note = " (note: many workspaces model ownership on list entries instead, which this check does not see)" if pct < 25 else ""
         section.findings.append(
-            f"{pct:.0f}% of People have an owner attribute on the record itself ({with_owner}/{len(people)} sample): {pts}/10{note}"
+            f"{pct:.0f}% of People have an owner attribute on the record itself ({with_owner}/{len(people)}{scope}): {pts}/10{note}"
         )
     else:
-        section.findings.append("Skipped owner check (no People sample): 0/10")
+        section.findings.append("Skipped owner check (no People records): 0/10")
 
     return section
 
@@ -255,8 +284,9 @@ def score_lists(token: str) -> Section:
     return section
 
 
-def score_activity(token: str) -> Section:
+def score_activity(token: str, full: bool = False) -> Section:
     section = Section(name="Activity", score=0, max_score=25)
+    scope = "" if full else " sampled"
 
     try:
         members = fetch_workspace_members(token)
@@ -276,7 +306,7 @@ def score_activity(token: str) -> Section:
 
     cutoff = datetime.now(timezone.utc) - timedelta(days=30)
     try:
-        people = fetch_records(token, "people", limit=SAMPLE_LIMIT)
+        people = fetch_records(token, "people", full=full)
     except requests.HTTPError:
         people = []
 
@@ -297,7 +327,7 @@ def score_activity(token: str) -> Section:
         pts = percent_score(pct, [(20, 15), (10, 10), (5, 5)])
         section.score += pts
         section.findings.append(
-            f"{pct:.0f}% of sampled People created in last 30d ({recent}/{len(people)}): {pts}/15"
+            f"{pct:.0f}% of{scope} People created in last 30d ({recent}/{len(people)}): {pts}/15"
         )
     else:
         section.findings.append("Could not assess record activity: 0/15")
@@ -371,6 +401,11 @@ def main() -> int:
     p = argparse.ArgumentParser(description="Score an Attio workspace 0-100")
     p.add_argument("--token", help="Attio API token (default: $ATTIO_API_KEY or $ATTIO_OAUTH2)")
     p.add_argument("--json", action="store_true", help="Output JSON instead of markdown")
+    p.add_argument(
+        "--full",
+        action="store_true",
+        help="Paginate every record instead of sampling 500. Slower, exact counts.",
+    )
     args = p.parse_args()
 
     token = args.token or os.environ.get("ATTIO_API_KEY") or os.environ.get("ATTIO_OAUTH2")
@@ -386,10 +421,10 @@ def main() -> int:
 
     objects = fetch_objects(token)
     sections = [
-        score_data_quality(token),
+        score_data_quality(token, full=args.full),
         score_schema(token, objects),
         score_lists(token),
-        score_activity(token),
+        score_activity(token, full=args.full),
     ]
     total = sum(s.score for s in sections)
 
