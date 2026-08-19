@@ -11,6 +11,7 @@ By [5050Growth](https://5050growth.com), a verified [Attio Expert](https://attio
 │  /attio-stale-records        Surface archive candidates.         │
 │  /attio-attribute-coverage   Find schema bloat (dead fields).    │
 │  /attio-backup               Snapshot a workspace, diff two.     │
+│  /attio-schema               Draw the data model, diff it.       │
 │  cli/attio                   Multi-workspace wrapper.            │
 └──────────────────────────────────────────────────────────────────┘
 ```
@@ -135,6 +136,22 @@ ATTIO_API_KEY=<your-token> npx -y attio-backup diff       # compare the last two
 ```
 
 Full skill docs: [skills/attio-backup/SKILL.md](skills/attio-backup/SKILL.md).
+
+### `/attio-schema`: Draw the data model, and diff two snapshots
+
+Attio has no ER view. This reads the schema and draws it: objects as cards, relationships as lines, with real cardinality. Solid lines are true two-way Relationships, dashed lines are one-way record-references, and the `1` / `N` / `?` badges say how many records sit on each end. Outputs an interactive HTML page, a standalone SVG, and a Mermaid block that renders natively in GitHub and Obsidian.
+
+`diff` matches on UUID rather than slug, so a rename reads as a rename instead of a delete plus an add, and the change is drawn onto the diagram: added green, removed red, changed amber.
+
+Schema only. It never calls a record endpoint, and the generated HTML makes zero network requests, so it opens offline and is safe to email. `--anonymize` strips every name while keeping the structure, for diagrams you want to publish.
+
+```bash
+ATTIO_API_KEY=<your-token> npx -y attio-schema                  # snapshot and draw
+ATTIO_API_KEY=<your-token> npx -y attio-schema --anonymize      # safe to publish
+npx -y attio-schema diff                                        # what changed
+```
+
+Full skill docs: [skills/attio-schema/SKILL.md](skills/attio-schema/SKILL.md).
 
 ### `cli/attio`: Multi-workspace CLI wrapper
 

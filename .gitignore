@@ -15,3 +15,7 @@ build/
 
 # Node (skills/attio-backup)
 node_modules/
+
+# Generated diagram output (root-anchored: does not match skills/attio-schema)
+/attio-schema/
+/attio-backup/

@@ -1,0 +1,34 @@
+{
+  "name": "attio-schema",
+  "version": "0.1.0",
+  "description": "Turn an Attio workspace schema into an interactive ER diagram (2D, 3D, or Mermaid), and diff two schemas to see exactly what changed.",
+  "type": "module",
+  "bin": { "attio-schema": "./bin/cli.js" },
+  "exports": { ".": "./src/index.js" },
+  "files": ["bin", "src", "vendor", "SKILL.md", "README.md"],
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "start": "node bin/cli.js"
+  },
+  "engines": { "node": ">=18.17" },
+  "keywords": [
+    "attio",
+    "crm",
+    "schema",
+    "erd",
+    "er-diagram",
+    "data-model",
+    "visualization",
+    "mermaid",
+    "diff"
+  ],
+  "author": "Nacho Lafuente (5050Growth) <nacho@5050growth.com>",
+  "homepage": "https://github.com/NachoLafuente/attio-toolkit/tree/main/skills/attio-schema#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NachoLafuente/attio-toolkit.git",
+    "directory": "skills/attio-schema"
+  },
+  "bugs": { "url": "https://github.com/NachoLafuente/attio-toolkit/issues" },
+  "license": "MIT"
+}
