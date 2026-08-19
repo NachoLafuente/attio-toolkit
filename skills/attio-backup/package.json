@@ -3,14 +3,42 @@
   "version": "0.1.0",
   "description": "Back up an entire Attio workspace to local JSON + CSV, and diff two snapshots to see exactly what changed.",
   "type": "module",
-  "bin": { "attio-backup": "./bin/cli.js" },
-  "exports": { ".": "./src/index.js" },
-  "files": ["bin", "src", "SKILL.md", "README.md"],
+  "bin": {
+    "attio-backup": "./bin/cli.js"
+  },
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "SKILL.md",
+    "README.md"
+  ],
   "scripts": {
     "test": "node --test test/*.test.js",
     "start": "node bin/cli.js"
   },
-  "engines": { "node": ">=18.17" },
-  "keywords": ["attio", "crm", "backup", "export", "snapshot", "diff"],
-  "license": "MIT"
+  "engines": {
+    "node": ">=18.17"
+  },
+  "keywords": [
+    "attio",
+    "crm",
+    "backup",
+    "export",
+    "snapshot",
+    "diff"
+  ],
+  "license": "MIT",
+  "author": "Nacho Lafuente (5050Growth) <nacho@5050growth.com>",
+  "homepage": "https://github.com/NachoLafuente/attio-toolkit/tree/main/skills/attio-backup#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NachoLafuente/attio-toolkit.git",
+    "directory": "skills/attio-backup"
+  },
+  "bugs": {
+    "url": "https://github.com/NachoLafuente/attio-toolkit/issues"
+  }
 }
