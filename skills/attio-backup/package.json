@@ -1,6 +1,6 @@
 {
   "name": "attio-backup",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Back up an entire Attio workspace to local JSON + CSV, and diff two snapshots to see exactly what changed.",
   "type": "module",
   "bin": {

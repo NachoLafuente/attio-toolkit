@@ -13,7 +13,7 @@ import { flattenRecord, entityId, flattenValues } from "./flatten.js";
 import { toCsv } from "./csv.js";
 import { Progress, bold, dim, green, red, yellow, humanDuration } from "./ui.js";
 
-export const VERSION = "0.1.0";
+export const VERSION = "0.1.1";
 
 export function snapshotName(date = new Date()) {
   return date.toISOString().replace(/:/g, "-").replace(/\.\d+Z$/, "Z");
