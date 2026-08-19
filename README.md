@@ -10,6 +10,7 @@ By [5050Growth](https://5050growth.com), a verified [Attio Expert](https://attio
 │  /attio-cost-explorer        Estimate your bill across plans.    │
 │  /attio-stale-records        Surface archive candidates.         │
 │  /attio-attribute-coverage   Find schema bloat (dead fields).    │
+│  /attio-backup               Snapshot a workspace, diff two.     │
 │  cli/attio                   Multi-workspace wrapper.            │
 └──────────────────────────────────────────────────────────────────┘
 ```
@@ -121,6 +122,19 @@ ATTIO_API_KEY=<your-token> python skills/attio-attribute-coverage/coverage.py --
 ```
 
 Full skill docs: [skills/attio-attribute-coverage/SKILL.md](skills/attio-attribute-coverage/SKILL.md). Sample output: [examples/bloated-schema/attribute-coverage.md](examples/bloated-schema/attribute-coverage.md).
+
+### `/attio-backup`: Snapshot a workspace, diff two snapshots
+
+Walks every object and attribute and writes the whole workspace to local JSON + CSV. Run it twice and `diff` tells you exactly what changed between the two snapshots: records added, deleted, and every field that moved. The answer to "who changed this and when" that Attio's audit log doesn't give you.
+
+The only Node skill here; the rest are Python.
+
+```bash
+ATTIO_API_KEY=<your-token> npx -y attio-backup            # snapshot now
+ATTIO_API_KEY=<your-token> npx -y attio-backup diff       # compare the last two
+```
+
+Full skill docs: [skills/attio-backup/SKILL.md](skills/attio-backup/SKILL.md).
 
 ### `cli/attio`: Multi-workspace CLI wrapper
 

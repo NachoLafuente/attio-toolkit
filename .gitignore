@@ -12,3 +12,6 @@ venv/
 *.egg-info/
 dist/
 build/
+
+# Node (skills/attio-backup)
+node_modules/

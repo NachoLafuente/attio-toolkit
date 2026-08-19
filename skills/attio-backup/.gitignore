@@ -1,0 +1,4 @@
+node_modules/
+attio-backup/
+*.log
+.env
